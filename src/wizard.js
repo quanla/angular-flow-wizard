@@ -168,7 +168,7 @@
                     var removePreviousContent;
                     var animation;
 
-                    $scope.$watch(attrs.fmtWizard + ".currentStep.contentEl", function(contentEl) {
+                    $scope.$watch(attrs.flowWizard + ".currentStep.contentEl", function(contentEl) {
                         var reload = function() {
                             if (removePreviousContent) {
                                 removePreviousContent();
