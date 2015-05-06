@@ -1,6 +1,11 @@
 # [AngularJS](http://angularjs.org) directives for Wizards that have flow control
 
-Flow wizards allow you to configure wizard steps in the way that is similar to programming, with conditions (if-then) and loops. 
+## Demo:
+
+[Here: http://quanla.github.io/angular-flow-wizard/](http://quanla.github.io/angular-flow-wizard/)
+
+## Description:
+Flow wizards allow you to create wizards and configure its steps in the way that is similar to programming, with conditional block of steps (if-then) and loops of steps. 
 
 > **Disclaimer**: If your wizard is simple, with a fixed list of steps, then consider using simpler solution. Mere usage of UI-Router may already be enough.
 
