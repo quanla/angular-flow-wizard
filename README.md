@@ -80,7 +80,7 @@ And "Prev Step" button:
 
 And "Finish" button:
 
-    <button ng-if="!wizard.hasNextStep()" ng-click="wizard.prevStep()">
+    <button ng-if="!wizard.hasNextStep()" ng-click="wizard.nextStep()">
         Finish
     </button>
 
@@ -91,14 +91,16 @@ Remember to declare the corresponding steps' controller and template files
 ### Phone ordering wizard:
 Here is an example of a complex wizard that need flow control. [DEMO here](http://quanla.github.io/angular-flow-wizard/)
 
- 1. Step 1: Ask user how many phones he/she want to order
- 2. Loop for each phone on the order
-	 1. Step 2: Ask for what phone type, and if he/she want to custom build it
-	 2. If user want to custom build the phone
-		 1. Choose phone color
-		 2. Choose phone size
-		 3. Choose chipset
-		 4. ...
+
+    1. Step 1: Ask user how many phones he/she want to order
+    2. Loop for each phone on the order
+	    1. Step 2: Ask for what phone type, and if he/she want to custom build it
+	    2. If user want to custom build the phone
+		    1. Choose phone color
+		    2. Choose phone size
+		    3. Choose chipset
+		    4. ...
+
 
 ## Dependencies:
 
