@@ -1,11 +1,13 @@
-function ExecStack(sequence, eval) {
+"use strict";
+
+function ExecStack(sequence, evaluate) {
     this.sequence = sequence;
     this.stack = [
         {
             at: 0
         }
     ];
-    this.eval = eval;
+    this.eval = evaluate;
 }
 ExecStack.prototype = {
     getList: function(parent) {

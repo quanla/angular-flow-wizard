@@ -1,95 +1,104 @@
 "use strict";
 
 (function () {
+    // #include "common-utils.js"
+    // #include "ExecStack.js"
 
     angular.module('flowwizard', [
     ])
         .factory("Wizards", function($compile, $templateCache, $http, $controller) {
+            function noAnimation() {
+                return {
+                    start: function(cleanup) {
+                        cleanup();
+                        return null;
+                    }
+                };
+            }
+
             return {
                 create: function($scope, sequence) {
+                    var animationProvider = noAnimation();
 
                     var wizardStack = new ExecStack(sequence, function(str) { return $scope.$eval(str); });
-
                     var finished = false;
-                    var changing = false;
                     var valid = true;
 
                     var currentStep = null;
 
                     var removeCurrentStep;
 
-                    function loadStep(step, wizardScope, done) {
+                    function loadTemplate(step, wizardScope, done) {
 
                         var templatePromise = $http.get(step.templateUrl, {cache: $templateCache}).then(function (result) {return result.data;});
 
-                        var removeStep;
-                        var cancelled = false;
-
                         templatePromise.then(function(content) {
-                            if (cancelled) return;
 
                             var stepScope = wizardScope.$new();
+                            var stepConfig = null;
                             $controller(step.controller, {
                                 $scope: stepScope,
                                 $wizardStepSetup: function(stepConfig1) {
-                                    currentStep = Object.create(step);
-                                    ObjectUtil.copy(stepConfig1, currentStep);
+                                    stepConfig = Object.create(step);
+                                    ObjectUtil.copy(stepConfig1, stepConfig);
                                 }
                             });
-                            if (currentStep == null) {
-                                currentStep = Object.create(step);
+                            if (stepConfig == null) {
+                                stepConfig = Object.create(step);
                             }
-                            currentStep.contentEl = function() {
-                                return $compile(angular.element(content))(stepScope);
-                            };
 
-                            removeStep = function () {
-                                stepScope.$destroy();
-                                currentStep = null;
-                            };
+                            var el = $compile(angular.element(content))(stepScope);
 
-                            if (done) done(stepScope);
+                            if (done) done(stepScope, el, stepConfig);
                         });
 
-                        return function() {
-                            cancelled = true;
-                            if (removeStep) removeStep();
-                        };
                     }
 
-                    function reload() {
+                    var animation;
+                    function reload(stack) {
 
                         if (removeCurrentStep) {
-                            removeCurrentStep();
+                            var removing = removeCurrentStep;
                             removeCurrentStep = null;
+                            animation = animationProvider.start(removing, function() {
+                                animation = null;
+                            });
                         }
 
-                        if (wizardStack.stack != null) {
-                            changing = true;
+                        if (stack != null) {
+                            loadTemplate(wizardStack.getStep(stack), $scope, function(stepScope, el, stepConfig) {
+                                var toLoadTemplate = function() {
+                                    currentStep = stepConfig;
+                                    currentStep.contentEl = el;
+                                    wizardStack.stack = stack;
 
-                            wizardStack.setVariables(function(name, value) {
-                                $scope[name] = value;
-                            });
-
-                            removeCurrentStep = loadStep(wizardStack.getCurrentStep(), $scope, function(stepScope) {
-                                changing = false;
-
-                                if (currentStep.valid) {
-                                    stepScope.$watch(currentStep.valid, function(valid1) {
-                                        valid = valid1;
+                                    wizardStack.setVariables(function(name, value) {
+                                        $scope[name] = value;
                                     });
-                                }
 
+                                    if (currentStep.valid) {
+                                        stepScope.$watch(currentStep.valid, function(valid1) {
+                                            valid = valid1;
+                                        });
+                                    }
+
+                                    removeCurrentStep = function() {
+                                        currentStep = null;
+                                        stepScope.$destroy();
+                                    };
+                                };
+                                if (animation != null) {
+                                    animation.mainExec(toLoadTemplate);
+                                } else {
+                                    toLoadTemplate();
+                                }
                             });
                         }
                     }
 
-                    reload();
+                    reload(wizardStack.stack);
 
                     return {
-                        get changing() {
-                            return changing;
-                        },
                         get finished() {
                             return finished;
                         },
@@ -99,6 +108,9 @@
                         get currentStep() {
                             return currentStep;
                         },
+                        set animationProvider(ap) {
+                            animationProvider = ap;
+                        },
                         nextStep: function() {
                             if (currentStep.save) {
                                 currentStep.save();
@@ -107,16 +119,14 @@
                             var peekNextStep = wizardStack.peekNextStep();
                             if (peekNextStep == null) {
                                 finished = true;
+                                reload(null);
                             } else {
-                                wizardStack.stack = peekNextStep;
+                                reload(peekNextStep);
                             }
-                            reload();
+
                         },
                         prevStep: function() {
-                            var peekPrevtStep = wizardStack.peekPrevStep();
-                            wizardStack.stack = peekPrevtStep;
-
-                            reload();
+                            reload(wizardStack.peekPrevStep());
                         },
                         hasPrevStep: function() {
                             return wizardStack.peekPrevStep() != null;
@@ -124,11 +134,53 @@
                         hasNextStep: function() {
                             return wizardStack.peekNextStep() != null;
                         },
-                        toStep: function(stack) {
-                            wizardStack.stack = stack;
-                            reload();
-                        }
+                        toStep: reload
                     };
+                }
+            };
+        })
+
+        .directive("wzFade", function() {
+
+            function fadeAnimation(fade, apply) {
+                return {
+                    start: function(cleanup, done) {
+                        var main;
+                        var ready = false;
+
+                        fade.fadeOut(200, function() {
+                            cleanup();
+
+                            if (main != null) {
+                                apply(main);
+                                fade.fadeIn(200);
+                                done();
+                            } else {
+                                ready = true;
+                            }
+                        });
+
+                        return {
+                            mainExec: function(main1) {
+                                if (ready) {
+                                    apply(main1);
+                                    fade.fadeIn(200);
+                                    done();
+                                } else {
+                                    main = main1;
+                                }
+                            }
+                        };
+                    }
+                };
+            }
+
+            return {
+                restrict: "A",
+                link: function($scope, elem, attrs) {
+                    var wizard = $scope.$eval(attrs.wzFade);
+
+                    wizard.animationProvider = fadeAnimation(elem, function(a) {$scope.$applyAsync(a);});
                 }
             };
         })
@@ -137,67 +189,22 @@
             return {
                 restrict: "A",
                 link: function($scope, elem, attrs) {
-                    var aniStart = function(done) {
-                        setTimeout(done, 0);
-                    };
-                    var aniEnd = function() {};
-
-                    var fade = elem.closest("[wz-fade]");
-                    if (fade.length > 0) {
-                        aniStart = function(done) {
-                            fade.fadeOut(200, done);
-                        };
-                        aniEnd = function() {
-                            fade.fadeIn(200);
-                        };
-                    }
-
-                    function animate(exec, done) {
-                        aniStart(function() {
-                            exec();
-                            done();
-                            aniEnd();
-                        });
-                        return {
-                            set exec(e) {
-                                exec = e;
-                            }
-                        };
-                    }
-
                     var removePreviousContent;
-                    var animation;
 
                     $scope.$watch(attrs.flowWizard + ".currentStep.contentEl", function(contentEl) {
-                        var reload = function() {
-                            if (removePreviousContent) {
-                                removePreviousContent();
-                                removePreviousContent = null;
-                            }
-
-                            if (contentEl) {
-                                var el = contentEl();
-                                $scope.$apply(function() {
-                                    elem.append(el);
-                                });
-                                removePreviousContent = function () {
-                                    el.remove();
-                                    elem.html("");
-                                };
-                            }
-                        };
-
-                        if (animation == null) {
-                            animation = animate(
-                                reload,
-                                function() {
-                                    animation = null;
-                                }
-                            )
-                        } else {
-                            animation.exec = reload;
+                        if (removePreviousContent) {
+                            removePreviousContent();
+                            removePreviousContent = null;
                         }
 
+                        if (contentEl) {
+                            elem.append(contentEl);
+
+                            removePreviousContent = function () {
+                                contentEl.remove();
+                                elem.html("");
+                            };
+                        }
                     });
                 }
             };
