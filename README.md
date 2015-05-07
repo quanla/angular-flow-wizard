@@ -5,9 +5,9 @@
 [Here: http://quanla.github.io/angular-flow-wizard/](http://quanla.github.io/angular-flow-wizard/)
 
 ## Description:
-Flow wizards allow you to create wizards and configure its steps in the way that is similar to programming, with conditional block of steps (if-then) and loops of steps. 
+This allows creating complex wizards that have loop steps or conditional steps - similar to flow control of any programming language.
 
-> **Disclaimer**: If your wizard is simple, with a fixed list of steps, then consider using simpler solution. Mere usage of UI-Router may already be enough.
+> **Disclaimer**: If your wizard is simple, with a fixed list of steps, and user is forced to proceed all of them, then consider using simpler solution, mere usage of UI-Router may already be enough.
 
 ## Explanation:
 
@@ -17,17 +17,90 @@ This complex flow control can be very difficult to simulate and would be error-p
 
 This library has support for call stack, peeking next step, previous step, so you can easily configure and control the flow of your wizard steps.
 
+## Usage:
+
+Include wizard.js in your application.
+
+    <script src="components/wizard/wizard.js"></script>
+
+Add the module `flowwizard` as a dependency to your app module:
+
+    var myapp = angular.module('myapp', ['flowwizard']);
+
+Configure your wizard steps in controller:
+
+    .controller("examples.phone-order.Ctrl", function($scope, Wizards) {
+        $scope.order = {
+            phones: []
+        };
+
+        function step(stepName) {
+            return {
+                controller: "examples.phone-order." + stepName + ".Ctrl",
+                templateUrl: "examples/phone-order/" + stepName + "/" + stepName + ".html"
+            };
+        }
+
+        $scope.wizard = Wizards.create($scope, [
+            step("step1"),
+            {
+                loop: "order.phones",
+                indexAs: "phoneIndex",
+                elementAs: "phone",
+                then: [
+                    step("step2"),
+                    {
+                        "if": "phone.customBuild",
+                        then: [
+                            step("step3")
+                        ]
+                    }
+                ]
+            }
+        ]);
+
+    })
+
+Add container for the wizard in your template:
+
+    <div flow-wizard="wizard"></div>
+*(Note that the wizard content and "Next Step"/"Prev Step" buttons are independent, this allows flexibly layout your wizard)*
+
+Add your "Next Step" button (below your wizard container):
+
+    <button ng-if="wizard.hasNextStep()" ng-click="wizard.nextStep()">
+        Next Step
+    </button>
+
+And "Prev Step" button:
+
+    <button ng-if="wizard.hasPrevStep()" ng-click="wizard.prevStep()">
+        Prev Step
+    </button>
+
+And "Finish" button:
+
+    <button ng-if="!wizard.hasNextStep()" ng-click="wizard.nextStep()">
+        Finish
+    </button>
+
+Remember to declare the corresponding steps' controller and template files
+
 ## Example:
 
 ### Phone ordering wizard:
- 1. Step 1: Ask user how many phones he/she want to order
- 2. Loop for each phone on the order
-	 1. Step 2: Ask for what phone type, and if he/she want to custom build it
-	 2. If user want to custom build the phone
-		 1. Choose phone color
-		 2. Choose phone size
-		 3. Choose chipset
-		 4. ...
+Here is an example of a complex wizard that need flow control. [DEMO here](http://quanla.github.io/angular-flow-wizard/)
+
+
+    1. Step 1: Ask user how many phones he/she want to order
+    2. Loop for each phone on the order
+	    1. Step 2: Ask for what phone type, and if he/she want to custom build it
+	    2. If user want to custom build the phone
+		    1. Choose phone color
+		    2. Choose phone size
+		    3. Choose chipset
+		    4. ...
+
 
 ## Dependencies:
 
