@@ -17,6 +17,11 @@ This complex flow control can be very difficult to simulate and would be error-p
 
 This library has support for call stack, peeking next step, previous step, so you can easily configure and control the flow of your wizard steps.
 
+## Installation:
+
+ - Through Bower: `bower install angular-flow-wizard`
+ - Through Github: http://quanla.github.io/angular-flow-wizard/wizard/wizard.min.js
+
 ## Usage:
 
 Include wizard.js in your application.
