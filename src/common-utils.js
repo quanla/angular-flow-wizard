@@ -23,6 +23,11 @@ ObjectUtil.clone = function(obj) {
         return ret;
     }
 };
+ObjectUtil.copy = function(fromO, toO) {
+    for (var name in fromO) {
+        toO[name] = fromO[name];
+    }
+};
 
 var Cols = Cols || {};
 
