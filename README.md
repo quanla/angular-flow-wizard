@@ -20,7 +20,7 @@ This library has support for call stack, peeking next step, previous step, so yo
 ## Installation:
 
  - Through Bower: `bower install angular-flow-wizard`
- - Through Github: [http://quanla.github.io/angular-flow-wizard/wizard/wizard.min.js](http://quanla.github.io/angular-flow-wizard/wizard/wizard.min.js)
+ - Through Github: [Download here](http://quanla.github.io/angular-flow-wizard/wizard/flowwizard-1.0.0.min.js)
 
 ## Usage:
 
