@@ -1,11 +1,11 @@
-function ExecStack(sequence, eval) {
+function ExecStack(sequence, scope) {
     this.sequence = sequence;
     this.stack = [
         {
             at: 0
         }
     ];
-    this.eval = eval;
+    this.scope = scope;
 }
 ExecStack.prototype = {
     getList: function(parent) {
@@ -28,14 +28,15 @@ ExecStack.prototype = {
     peekPrevStep: function() {
         return this.tryChangeStep(false);
     },
-    setVariables: function(setter) {
-        for (var i = 0; i < this.stack.length; i++) {
-            var s = this.stack[i];
+    setVariables: function(object, stack) {
+        if (stack == null) stack = this.stack;
+        for (var i = 0; i < stack.length; i++) {
+            var s = stack[i];
 
             if (s.loopIndex != null) {
-                var step = this.getStep(this.stack, i);
-                setter(step.elementAs, this.eval(step.loop)[s.loopIndex]);
-                setter(step.indexAs, s.loopIndex);
+                var step = this.getStep(stack, i);
+                object[step.elementAs] = this.scope.$eval(step.loop)[s.loopIndex];
+                object[step.indexAs] = s.loopIndex;
             }
         }
     },
@@ -61,9 +62,12 @@ ExecStack.prototype = {
             return isLoop(me.getStep(assume, -1));
         }
         function checkAdvancingParentLoopCond() {
-            var loopStep = me.getStep(assume, -1);
+            
+            var checkObject = Object.create(me.scope);
+            me.setVariables(checkObject, assume);
 
-            var col = me.eval(loopStep.loop);
+            var loopStep = me.getStep(assume, -1);
+            var col = checkObject.$eval(loopStep.loop);
 
             var s = assume[assume.length - 1];
 
@@ -79,11 +83,15 @@ ExecStack.prototype = {
         }
 
         function checkLoopCond(step) {
-            var col = me.eval(step.loop);
+            var col = me.scope.$eval(step.loop);
             return Cols.isNotEmpty(col);
         }
         function checkIfCond(step) {
-            return me.eval(step.if);
+            
+            var checkObject = Object.create(me.scope);
+            me.setVariables(checkObject, assume);
+            
+            return checkObject.$eval(step.if);
         }
 
         function isIf(step) {
@@ -100,7 +108,7 @@ ExecStack.prototype = {
                         // Looping
                         assume[assume.length - 1].loopIndex--;
                         var parentStep = me.getStep(assume, -1);
-                        assume[assume.length - 1].at = me.eval(parentStep.loop).length - 1;
+                        assume[assume.length - 1].at = me.scope.$eval(parentStep.loop).length - 1;
 
                     } else {
                         // Out of loop
@@ -147,7 +155,7 @@ ExecStack.prototype = {
                     if (checkLoopCond(step)) {
                         assume.push({
                             at: (advancing ? 0 : step.then.length - 1),
-                            loopIndex: (advancing ? 0 : me.eval(step.loop).length - 1)
+                            loopIndex: (advancing ? 0 : me.scope.$eval(step.loop).length - 1)
                         });
                     } else {
                         // Go on, skip loop

@@ -8,7 +8,7 @@
             return {
                 create: function($scope, sequence) {
 
-                    var wizardStack = new ExecStack(sequence, function(str) { return $scope.$eval(str); });
+                    var wizardStack = new ExecStack(sequence, $scope);
 
                     var finished = false;
                     var changing = false;
@@ -67,9 +67,7 @@
                         if (wizardStack.stack != null) {
                             changing = true;
 
-                            wizardStack.setVariables(function(name, value) {
-                                $scope[name] = value;
-                            });
+                            wizardStack.setVariables($scope);
 
                             removeCurrentStep = loadStep(wizardStack.getCurrentStep(), $scope, function(stepScope) {
                                 changing = false;
