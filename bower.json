@@ -1,0 +1,30 @@
+{
+  "name": "angular-flow-wizard",
+  "version": "1.0.0",
+  "homepage": "https://github.com/quanla/angular-flow-wizard",
+  "authors": [
+    "Le Anh Quan <quanla2003@gmail.com>"
+  ],
+  "description": "AngularJS directives for Wizards that have flow control",
+  "main": "src/wizard.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "AngularJS",
+    "Wizard",
+    "flow",
+    "control",
+    "conditional",
+    "step",
+    "loop"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
