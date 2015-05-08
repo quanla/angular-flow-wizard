@@ -82,6 +82,7 @@
 
                                     removeCurrentStep = function() {
                                         currentStep = null;
+                                        valid = true;
                                         stepScope.$destroy();
                                     };
                                 };
