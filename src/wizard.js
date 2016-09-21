@@ -184,7 +184,7 @@
             };
         })
 
-        .directive("flowWizard", function() {
+        .directive("flowWizard", function($compile) {
             return {
                 restrict: "A",
                 link: function($scope, elem, attrs) {
@@ -198,6 +198,7 @@
 
                         if (contentEl) {
                             elem.append(contentEl);
+                            $compile(contentEl)($scope);
 
                             removePreviousContent = function () {
                                 contentEl.remove();
